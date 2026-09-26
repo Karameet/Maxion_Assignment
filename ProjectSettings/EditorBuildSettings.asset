@@ -6,8 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
+    path: Assets/Maxion_Assignment/Scenes/Initialize.unity
+    guid: ccd557e8ce76b264a854dd852bed4fe3
+  - enabled: 1
+    path: Assets/Maxion_Assignment/Scenes/Login.unity
+    guid: 7be233f167cd00f428ee471f5f311cc7
+  - enabled: 1
+    path: Assets/Maxion_Assignment/Scenes/Shop.unity
+    guid: 09c6aa58361c3a843b11e9106cf08141
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
