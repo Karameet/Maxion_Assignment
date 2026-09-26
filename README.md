@@ -89,9 +89,43 @@ The backend URL is **not** in a config file. It is a serialized field on the `In
 
 Change it in the Inspector, not in `BackendConfig.cs`. The scene's value overrides the code default.
 
-Other settings on the same objects:
-- `InitializeLifetimeScope`: request timeout, health-check attempts and delay, next scene.
-- `LoginLifetimeScope`: scene to load after login.
+`LoginLifetimeScope` in `Login.unity` also has one setting: the scene to load after login (`Shop`).
+
+### Initialize settings
+
+`Initialize.unity` has a single GameObject, `InitializeLifetimeScope`. Select it and every setting is in the Inspector, in two groups:
+
+**Backend Config** (`BackendConfig.cs`)
+
+| Field | Default | What it does |
+|---|---|---|
+| Base Url | `http://localhost:8080` | Server address used by every request. A trailing `/` is removed. See the table above. |
+| Timeout Seconds | `10` | Timeout for each HTTP request (`UnityWebRequest.timeout`). A request that runs longer fails as a network error. |
+
+**Initialize Settings** (`InitializeSettings.cs`)
+
+| Field | Default in scene | What it does |
+|---|---|---|
+| Next Scene Name | `Login` | Scene loaded after the health check and product load succeed. It must be in the build scene list. Leave it empty to stay on Initialize, which is handy for testing only the connection. |
+| Health Check Attempts | `3` | How many times to call `GET /healthz` before giving up. Minimum 1. |
+| Health Check Retry Delay Seconds | `1` | Wait between health-check attempts. |
+
+> The code default for Next Scene Name is empty. The scene sets it to `Login`. If you add a new `InitializeLifetimeScope`, fill it in yourself.
+
+**What happens on Play**
+
+1. `InitializeLifetimeScope` calls `DontDestroyOnLoad` on itself, so it survives scene loads. It registers `BackendConfig`, `InitializeSettings`, `PlayerSession`, `ProductCatalog`, and `BackendApiClient` as singletons.
+2. `InitializeEntryPoint` calls `GET /healthz`. Only network errors (the server can't be reached, or a timeout) and 5xx responses are retried. A 4xx fails straight away.
+3. It calls `GET /api/products` and stores the result in `ProductCatalog`, so Shop can show products immediately.
+4. It loads Next Scene Name.
+
+If any step fails, the Console shows `[Initialize] Backend connection failed: ...` and the game stays on Initialize. Start the backend, then press Play again.
+
+With the defaults, the longest wait before giving up on a server that isn't running is about 3 × 10 s timeout + 2 × 1 s delay ≈ 32 s. It is usually much shorter, because a refused connection fails at once. Lower Timeout Seconds if you want failures to show up faster.
+
+**How Login and Shop find these services**
+
+`LoginLifetimeScope` and `ShopLifetimeScope` set their parent to `InitializeLifetimeScope` in code (`ParentReference.Create<InitializeLifetimeScope>()`). That is why they share the same `BackendApiClient`, `PlayerSession`, and `ProductCatalog`, and why Play must start from `Initialize.unity`.
 
 > The backend serves plain HTTP, so **Player Settings → Other Settings → Allow downloads over HTTP** is already set to *Always allowed*. Keep it that way, or switch the backend to HTTPS.
 
